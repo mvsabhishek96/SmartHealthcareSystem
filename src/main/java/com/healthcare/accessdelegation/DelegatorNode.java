@@ -43,9 +43,17 @@ public class DelegatorNode {
     public void setFitness(double fitness) {
         this.fitness = fitness;
     }
-    
-    // Added method: simulate an access decision with 80% probability of approval.
+
+    /**
+     * Access decision method.
+     * Currently always approves access.
+     * The 80% approval logic is commented out for future use.
+     */
     public boolean decideAccess(String accessRequest) {
-        return Math.random() > 0.2;
+        // Always approve access
+        return true;
+
+        // 80% approval, 20% denial (commented out)
+        // return Math.random() > 0.2;
     }
 }

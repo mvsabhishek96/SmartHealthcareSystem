@@ -12,12 +12,15 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
+            margin: 0;
         }
         .container {
             background: #ffffff;
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
         }
         h2 {
             text-align: center;
@@ -34,6 +37,7 @@
             margin-top: 5px;
             border: 1px solid #ccc;
             border-radius: 4px;
+            box-sizing: border-box;
         }
         input[type="submit"] {
             width: 100%;
@@ -44,6 +48,7 @@
             margin-top: 20px;
             border-radius: 4px;
             font-size: 16px;
+            cursor: pointer;
         }
         input[type="submit"]:hover {
             background-color: #45a049;
@@ -53,15 +58,15 @@
 <body>
     <div class="container">
         <h2>Submit Heart Rate Data</h2>
-        <form action="GatewayServlet" method="post">
+        <form action="http://localhost:8080/SmartHealthcareSystemnew/EdgeNodeServletdatarequest" method="post">
             <label for="deviceId">Device ID:</label>
-            <input type="text" id="deviceId" name="deviceId" required>
+            <input type="text" id="deviceId" name="deviceId" placeholder="e.g., 21F91A4361" required>
 
             <label for="heartRateData">Heart Rate Data:</label>
-            <input type="text" id="heartRateData" name="heartRateData" required>
+            <input type="text" id="heartRateData" name="heartRateData" placeholder="e.g., 72 bpm" required>
 
             <label for="signature">Digital Signature:</label>
-            <input type="text" id="signature" name="signature" required>
+            <input type="text" id="signature" name="signature" placeholder="e.g., abc123xyz" required>
 
             <input type="submit" value="Submit Data">
         </form>

@@ -13,11 +13,13 @@ public class PBFTConsensus {
      */
     public boolean executeConsensus(List<DelegatorNode> delegatorNodes, String data, String accessRequest) {
         int totalNodes = delegatorNodes.size();
-        int faultTolerance = (totalNodes - 1) / 3;  // Allow up to (totalNodes-1)/3 faulty nodes.
+        int faultTolerance = (totalNodes - 1) / 3; // Allow up to (totalNodes-1)/3 faulty nodes.
         int requiredConsensus = totalNodes - faultTolerance;
         
         int agreeCount = 0;
         for (DelegatorNode node : delegatorNodes) {
+            // We assume the consensus is based solely on the accessRequest (userId).
+            // If you need to use data as well, modify decideAccess accordingly.
             if (node.decideAccess(accessRequest)) {
                 agreeCount++;
             }
