@@ -108,7 +108,8 @@
       <a href="#register">Register Device</a>
       <a href="#submit-data">Submit Data</a>
       <a href="#blockchain">Blockchain</a>
-      <a href="nodes">Node Status</a>
+      <!-- Corrected href value -->
+      <a href="#nodes">Node Status</a>
     </div>
   </nav>
 
@@ -210,20 +211,24 @@
 
     <!-- Node Status Section -->
     <section id="nodes" class="card" style="display: none;">
-      <h2>Delegator Node Status</h2>
-      <table class="data-table">
+      <h2>RHSO Aggregator - Node Metrics</h2>
+      <table id="nodeTable">
         <thead>
           <tr>
             <th>Node Name</th>
-            <th>Status</th>
+            <th>URL</th>
             <th>Trust</th>
+            <th>Energy</th>
+            <th>Load</th>
+            <th>Resource Availability</th>
             <th>Fitness</th>
           </tr>
         </thead>
-        <tbody id="node-status">
-          <!-- Dynamically populated -->
+        <tbody id="nodeStatus">
+          <!-- Node rows will be inserted here -->
         </tbody>
       </table>
+      <button id="refreshButton">Refresh Status</button>
     </section>
   </div>
 
@@ -237,7 +242,7 @@
         document.querySelector(sectionId).style.display = 'block';
         // Load data for Node Status and Blockchain sections when selected
         if (sectionId === "#nodes") {
-          loadNodeStatus();
+          fetchNodeStatus();
         }
         if (sectionId === "#blockchain") {
           loadBlockchainRecords();
@@ -283,28 +288,40 @@
       }
     }
     
-    // Function to load node status data
-    async function loadNodeStatus() {
+    // Function to fetch and display node status data
+    async function fetchNodeStatus() {
       const baseUrl = window.location.origin + '/SmartHealthcareSystemnew';
-      const nodeStatusData = await fetchData(baseUrl + '/NodeStatus');
-      const nodeStatusBody = document.getElementById('node-status');
-      nodeStatusBody.innerHTML = ''; // Clear previous content
-      if (nodeStatusData && Array.isArray(nodeStatusData)) {
-        nodeStatusData.forEach(node => {
-          // Assuming "Status" is always "Online" for demonstration
-          nodeStatusBody.innerHTML += `
-            <tr>
-              <td>${node.nodeName}</td>
-              <td>Online</td>
-              <td>${node.trust}</td>
-              <td>${node.fitness}</td>
-            </tr>
+      try {
+        const response = await fetch(baseUrl + '/rhso-status');
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        const nodes = await response.json();
+        const tbody = document.getElementById('nodeStatus');
+        tbody.innerHTML = '';
+        nodes.forEach(node => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${node.nodeName}</td>
+            <td>${node.url}</td>
+            <td>${node.trust}</td>
+            <td>${node.energy}</td>
+            <td>${node.load}</td>
+            <td>${node.resourceAvailability}</td>
+            <td>${node.fitness}</td>
           `;
+          tbody.appendChild(tr);
         });
-      } else {
-        nodeStatusBody.innerHTML = `<tr><td colspan="4">No node data available</td></tr>`;
+      } catch (error) {
+        console.error('Error fetching node status:', error);
       }
     }
+    
+    document.getElementById('refreshButton').addEventListener('click', fetchNodeStatus);
+    window.onload = () => {
+      fetchNodeStatus();
+      loadDashboardData();
+    };
     
     // Function to load blockchain records data
     async function loadBlockchainRecords() {
@@ -326,9 +343,6 @@
         recordsBody.innerHTML = `<tr><td colspan="3">No records available</td></tr>`;
       }
     }
-    
-    // Load initial dashboard data on page load
-    loadDashboardData();
   </script>
 </body>
 </html>

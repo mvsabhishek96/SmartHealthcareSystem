@@ -1,75 +1,52 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wearable Device Data Submission</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-        .container {
-            background: #ffffff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 400px;
-        }
-        h2 {
-            text-align: center;
-            color: #333;
-        }
-        label {
-            display: block;
-            margin-top: 10px;
-            font-weight: bold;
-        }
-        input[type="text"] {
-            width: 100%;
-            padding: 8px;
-            margin-top: 5px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-        input[type="submit"] {
-            width: 100%;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            padding: 10px;
-            margin-top: 20px;
-            border-radius: 4px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-        input[type="submit"]:hover {
-            background-color: #45a049;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>Data Submission Options</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .container {
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+    }
+    input[type="submit"] {
+      width: 80%;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 4px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    input[type="submit"]:hover {
+      background-color: #45a049;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h2>Submit Heart Rate Data</h2>
-        <form action="http://localhost:8080/SmartHealthcareSystemnew/EdgeNodeServletdatarequest" method="post">
-            <label for="deviceId">Device ID:</label>
-            <input type="text" id="deviceId" name="deviceId" placeholder="e.g., 21F91A4361" required>
-
-            <label for="heartRateData">Heart Rate Data:</label>
-            <input type="text" id="heartRateData" name="heartRateData" placeholder="e.g., 72 bpm" required>
-
-            <label for="signature">Digital Signature:</label>
-            <input type="text" id="signature" name="signature" placeholder="e.g., abc123xyz" required>
-
-            <input type="submit" value="Submit Data">
-        </form>
-    </div>
+  <div class="container">
+    <h2>Select Data Submission Type</h2>
+    <form action="iot_submission.html">
+      <input type="submit" value="Submit as IoT Device">
+    </form>
+    <form action="doctor_login.html">
+      <input type="submit" value="Submit as Doctor">
+    </form>
+  </div>
 </body>
 </html>

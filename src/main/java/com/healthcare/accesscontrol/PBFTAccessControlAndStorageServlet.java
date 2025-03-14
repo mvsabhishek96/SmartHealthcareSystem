@@ -1,8 +1,5 @@
 package com.healthcare.accesscontrol;
 
-import com.healthcare.accessdelegation.DelegatorNode;
-import com.healthcare.accessdelegation.NodeManager;
-import com.healthcare.accessdelegation.RHSOAlgorithm;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -18,14 +15,11 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.List;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.net.URI;
-
 
 @WebServlet("/PBFTAccessControlAndStorageServlet")
 public class PBFTAccessControlAndStorageServlet extends HttpServlet {
@@ -40,15 +34,21 @@ public class PBFTAccessControlAndStorageServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         response.setContentType("text/html");
+        
         try (PrintWriter out = response.getWriter()) {
             System.out.println("Starting PBFT Access Control and Storage process...");
             
-            // Fetch data from EdgeNodeServlet (assumed to be valid)
-            String edgeNodeData = fetchDataFromEdgeNode();
-            System.out.println("Fetched Edge Node Data: " + edgeNodeData);
-            if (edgeNodeData == null || edgeNodeData.trim().isEmpty()) {
-                out.println("<p>Error: No data received from EdgeNodeServlet.</p>");
-                return;
+            // Check if the request is coming from DoctorFileUploadServlet
+            String fromDoctor = request.getParameter("fromDoctor");
+            String edgeNodeData = "";
+            if (fromDoctor == null || !fromDoctor.equalsIgnoreCase("true")) {
+                // Existing functionality: Fetch data from EdgeNodeServlet
+                edgeNodeData = fetchDataFromEdgeNode();
+                System.out.println("Fetched Edge Node Data: " + edgeNodeData);
+                if (edgeNodeData == null || edgeNodeData.trim().isEmpty()) {
+                    out.println("<p>Error: No data received from EdgeNodeServlet.</p>");
+                    return;
+                }
             }
             
             // Retrieve parameters from the request
@@ -61,15 +61,10 @@ public class PBFTAccessControlAndStorageServlet extends HttpServlet {
             System.out.println("User ID: " + userId);
             System.out.println("Patient Data: " + patientData);
             
-            // Execute PBFT consensus using available delegator nodes
-           /* NodeManager nm = new NodeManager();
-            List<DelegatorNode> availableNodes = nm.getAvailableNodes();
-            RHSOAlgorithm rhso = new RHSOAlgorithm();
-            List<DelegatorNode> selectedNodes = rhso.selectDelegatorNodes(availableNodes);*/
+            // Execute PBFT consensus check (using your PBFTConsensus class)
             PBFTConsensus pbft = new PBFTConsensus();
-           // boolean accessGranted = pbft.executeConsensus(selectedNodes, patientData, userId);
             boolean accessGranted = pbft.executeConsensus(patientData, userId);
-
+            
             out.println("<html><head><title>Access Control & Storage Result</title></head><body>");
             if (accessGranted) {
                 out.println("<p>Access granted to user: <strong>" + userId + "</strong></p>");
@@ -78,6 +73,7 @@ public class PBFTAccessControlAndStorageServlet extends HttpServlet {
                 // Store patient data in CloudData table
                 storeDataInCloudDB(userId, patientData);
                 System.out.println("CloudData insertion executed for user: " + userId);
+                
                 // Compute the SHA-256 hash of the patient data
                 String dataHash = computeSHA256(patientData);
                 System.out.println("Patient Data Hash: " + dataHash);
@@ -89,8 +85,10 @@ public class PBFTAccessControlAndStorageServlet extends HttpServlet {
                 notifyBlockchainServlet(userId, dataHash);
                 
                 out.println("<p>Patient data stored and new hash notification sent to BlockchainServlet.</p>");
-                out.println("<h3>Fetched Data from EdgeNodeServlet:</h3>");
-                out.println("<p>" + edgeNodeData + "</p>");
+                if (fromDoctor == null || !fromDoctor.equalsIgnoreCase("true")) {
+                    out.println("<h3>Fetched Data from EdgeNodeServlet:</h3>");
+                    out.println("<p>" + edgeNodeData + "</p>");
+                }
             } else {
                 out.println("<p>Access control consensus did not grant access; data was not stored.</p>");
             }
@@ -101,12 +99,11 @@ public class PBFTAccessControlAndStorageServlet extends HttpServlet {
     }
     
     // Sample method to fetch data from EdgeNodeServlet.
-   private String fetchDataFromEdgeNode() {
+    private String fetchDataFromEdgeNode() {
         HttpURLConnection conn = null;
         try {
-        	URI uri = URI.create("http://localhost:8080/SmartHealthcareSystemnew/EdgeNodeServletdatarequest");
-        	URL url = uri.toURL();
-
+            URI uri = URI.create("http://localhost:8080/SmartHealthcareSystemnew/EdgeNodeServletdatarequest");
+            URL url = uri.toURL();
             conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");
             conn.setRequestProperty("Accept", "text/plain");
@@ -158,41 +155,45 @@ public class PBFTAccessControlAndStorageServlet extends HttpServlet {
     // Store patient data in CloudData table.
     private void storeDataInCloudDB(String userId, String patientData) {
         String sql = "INSERT INTO CloudData (userId, patientData) VALUES (?, ?)";
-        try (Connection con = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
-             PreparedStatement ps = con.prepareStatement(sql)) {
-        	System.out.println("Attempting to insert into CloudData for user: " + userId + " with patientData: " + patientData);
-            ps.setString(1, userId);
-            ps.setString(2, patientData);
-            //ps.setTimestamp(3, new java.sql.Timestamp(System.currentTimeMillis()));
-            int rowsAffected = ps.executeUpdate();
-            System.out.println("CloudData table updated. Rows inserted: " + rowsAffected);
-        } catch (SQLException e) {
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            try (Connection con = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+                 PreparedStatement ps = con.prepareStatement(sql)) {
+                System.out.println("Attempting to insert into CloudData for user: " + userId);
+                ps.setString(1, userId);
+                ps.setString(2, patientData);
+                int rowsAffected = ps.executeUpdate();
+                System.out.println("CloudData table updated. Rows inserted: " + rowsAffected);
+            }
+        } catch (ClassNotFoundException | SQLException e) {
             e.printStackTrace();
         }
     }
     
     // Log the transaction in the BlockchainLog table.
     private void logTransactionToBlockchainDB(String userId, String dataHash) {
-        String sql = "INSERT INTO BlockchainLog (userId, dataHash) VALUES (?, ?)";
-        try (Connection con = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
-             PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, userId);
-            ps.setString(2, dataHash);
-            int rowsAffected = ps.executeUpdate();
-            System.out.println("BlockchainLog table updated. Rows inserted: " + rowsAffected);
-        } catch (SQLException e) {
+        String sql = "INSERT INTO BlockchainLog (userId, dataHash, timestamp) VALUES (?, ?, ?)";
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            try (Connection con = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+                 PreparedStatement ps = con.prepareStatement(sql)) {
+                ps.setString(1, userId);
+                ps.setString(2, dataHash);
+                ps.setTimestamp(3, new java.sql.Timestamp(System.currentTimeMillis()));
+                int rowsAffected = ps.executeUpdate();
+                System.out.println("BlockchainLog table updated. Rows inserted: " + rowsAffected);
+            }
+        } catch (ClassNotFoundException | SQLException e) {
             e.printStackTrace();
         }
     }
     
     // Notify BlockchainServlet via HTTP POST.
     private void notifyBlockchainServlet(String userId, String dataHash) {
-    	String blockchainServletURL = "http://localhost:8080/SmartHealthcareSystemnew/BlockchainServlet";
-
+        String blockchainServletURL = "http://localhost:8080/SmartHealthcareSystemnew/BlockchainServlet";
         try {
-        	URI uri = URI.create(blockchainServletURL);
-        	URL url = uri.toURL();
-
+            URI uri = URI.create(blockchainServletURL);
+            URL url = uri.toURL();
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("POST");
             conn.setDoOutput(true);
