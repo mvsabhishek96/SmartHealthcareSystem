@@ -10,11 +10,9 @@ import java.net.URI;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -51,9 +49,12 @@ public class PBFTAccessControlAndStorageServlet extends HttpServlet {
                 }
             }
             
-            // Retrieve parameters from the request
+            // Retrieve parameters
             String userId = request.getParameter("userId");
             String patientData = request.getParameter("patientData");
+            String fileName = request.getParameter("fileName");  // already in your table
+            String patientUsername = request.getParameter("patientUsername"); // new parameter for doctor uploads
+            
             if (userId == null || patientData == null || userId.trim().isEmpty() || patientData.trim().isEmpty()) {
                 out.println("<p>Error: Missing or invalid parameters.</p>");
                 return;
@@ -70,8 +71,14 @@ public class PBFTAccessControlAndStorageServlet extends HttpServlet {
                 out.println("<p>Access granted to user: <strong>" + userId + "</strong></p>");
                 System.out.println("Access granted for user: " + userId);
                 
-                // Store patient data in CloudData table
-                storeDataInCloudDB(userId, patientData);
+                // Determine submission type; if from a doctor upload, mark as "doctor"
+                String submissionType = "iot";
+                if (fromDoctor != null && fromDoctor.equalsIgnoreCase("true")) {
+                    submissionType = "doctor";
+                }
+                
+                // Store patient data in CloudData table, including fileName and patientUsername
+                storeDataInCloudDB(userId, patientData, fileName, submissionType, patientUsername);
                 System.out.println("CloudData insertion executed for user: " + userId);
                 
                 // Compute the SHA-256 hash of the patient data
@@ -81,7 +88,7 @@ public class PBFTAccessControlAndStorageServlet extends HttpServlet {
                 // Log the transaction in the BlockchainLog table
                 logTransactionToBlockchainDB(userId, dataHash);
                 
-                // Notify the BlockchainServlet that a new hash is generated.
+                // Notify the BlockchainServlet
                 notifyBlockchainServlet(userId, dataHash);
                 
                 out.println("<p>Patient data stored and new hash notification sent to BlockchainServlet.</p>");
@@ -98,7 +105,7 @@ public class PBFTAccessControlAndStorageServlet extends HttpServlet {
         }
     }
     
-    // Sample method to fetch data from EdgeNodeServlet.
+    // Existing method to fetch data from EdgeNodeServlet.
     private String fetchDataFromEdgeNode() {
         HttpURLConnection conn = null;
         try {
@@ -146,26 +153,29 @@ public class PBFTAccessControlAndStorageServlet extends HttpServlet {
                 hexString.append(hex);
             }
             return hexString.toString();
-        } catch (NoSuchAlgorithmException | IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
     }
     
-    // Store patient data in CloudData table.
-    private void storeDataInCloudDB(String userId, String patientData) {
-        String sql = "INSERT INTO CloudData (userId, patientData) VALUES (?, ?)";
+    // Store patient data in CloudData table (now accepts fileName and patientUsername)
+    private void storeDataInCloudDB(String userId, String patientData, String fileName, String submissionType, String patientUsername) {
+        String sql = "INSERT INTO CloudData (userId, patientData, fileName, submissionType, patientUsername) VALUES (?, ?, ?, ?, ?)";
         try {
-            Class.forName("com.mysql.jdbc.Driver");
+            Class.forName("com.mysql.cj.jdbc.Driver"); // Using the new driver class
             try (Connection con = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
                  PreparedStatement ps = con.prepareStatement(sql)) {
                 System.out.println("Attempting to insert into CloudData for user: " + userId);
                 ps.setString(1, userId);
                 ps.setString(2, patientData);
+                ps.setString(3, fileName);
+                ps.setString(4, submissionType);
+                ps.setString(5, patientUsername);
                 int rowsAffected = ps.executeUpdate();
                 System.out.println("CloudData table updated. Rows inserted: " + rowsAffected);
             }
-        } catch (ClassNotFoundException | SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -174,7 +184,7 @@ public class PBFTAccessControlAndStorageServlet extends HttpServlet {
     private void logTransactionToBlockchainDB(String userId, String dataHash) {
         String sql = "INSERT INTO BlockchainLog (userId, dataHash, timestamp) VALUES (?, ?, ?)";
         try {
-            Class.forName("com.mysql.jdbc.Driver");
+            Class.forName("com.mysql.cj.jdbc.Driver");
             try (Connection con = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
                  PreparedStatement ps = con.prepareStatement(sql)) {
                 ps.setString(1, userId);
@@ -183,7 +193,7 @@ public class PBFTAccessControlAndStorageServlet extends HttpServlet {
                 int rowsAffected = ps.executeUpdate();
                 System.out.println("BlockchainLog table updated. Rows inserted: " + rowsAffected);
             }
-        } catch (ClassNotFoundException | SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

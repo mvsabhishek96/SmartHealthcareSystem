@@ -28,10 +28,24 @@ public class DoctorFileUploadServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        // Check if doctor is logged in by verifying session attribute "doctorEmail"
+        // Check if doctor is logged in via session attribute "doctorEmail"
         String doctorEmail = (String) request.getSession().getAttribute("doctorEmail");
         if (doctorEmail == null) {
             response.getWriter().write("Not logged in. Please login first.");
+            return;
+        }
+        
+        // Retrieve the file name (already existing field)
+        String fileName = request.getParameter("fileName");
+        if (fileName == null || fileName.trim().isEmpty()) {
+            response.getWriter().write("File name is required.");
+            return;
+        }
+        
+        // Retrieve the patient username for association
+        String patientUsername = request.getParameter("patientUsername");
+        if (patientUsername == null || patientUsername.trim().isEmpty()) {
+            response.getWriter().write("Patient username is required.");
             return;
         }
         
@@ -47,20 +61,22 @@ public class DoctorFileUploadServlet extends HttpServlet {
         byte[] fileData = fileContent.readAllBytes();
         fileContent.close();
         
-        // Process the file based on its MIME type (supporting PDF and text files)
+        // Process the file based on its MIME type (support PDF and text)
         String patientData = "";
         String contentType = filePart.getContentType();
         if ("application/pdf".equalsIgnoreCase(contentType)) {
             // For PDF files, encode the binary data into a Base64 string
             patientData = Base64.getEncoder().encodeToString(fileData);
         } else {
-            // For text-based files (e.g., text/plain), convert the data to a UTF-8 string
+            // For text files, convert the data to a UTF-8 string
             patientData = new String(fileData, "UTF-8");
         }
         
         // Prepare parameters to forward to PBFTAccessControlAndStorageServlet
         String urlParameters = "userId=" + URLEncoder.encode(doctorEmail, "UTF-8") +
                                "&patientData=" + URLEncoder.encode(patientData, "UTF-8") +
+                               "&fileName=" + URLEncoder.encode(fileName, "UTF-8") +
+                               "&patientUsername=" + URLEncoder.encode(patientUsername, "UTF-8") +
                                "&fromDoctor=true";
         
         // Forward the processed data via HTTP POST to PBFTAccessControlAndStorageServlet
@@ -87,7 +103,7 @@ public class DoctorFileUploadServlet extends HttpServlet {
                 }
             }
             
-            // Return the response received from PBFTAccessControlAndStorageServlet
+            // Return the response from PBFTAccessControlAndStorageServlet
             response.getWriter().write("Response from PBFTAccessControlAndStorageServlet: " + sb.toString());
         } catch (Exception e) {
             e.printStackTrace();

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Healthcare System</title>
+  <style>
+    :root {
+      --primary-color: #2c3e50;
+      --secondary-color: #3498db;
+      --success-color: #27ae60;
+      --danger-color: #e74c3c;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      background-color: #f5f6fa;
+    }
+    .navbar {
+      background-color: var(--primary-color);
+      padding: 1rem 2rem;
+      color: white;
+      text-align: center;
+    }
+    .container {
+      max-width: 800px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+    .card {
+      background: white;
+      border-radius: 8px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      margin-bottom: 1rem;
+    }
+    .card h2 {
+      margin-top: 0;
+    }
+    .form-group {
+      margin-bottom: 1rem;
+    }
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+    }
+    input, select {
+      width: 100%;
+      padding: 0.8rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    button {
+      background-color: var(--secondary-color);
+      color: white;
+      border: none;
+      padding: 0.8rem 1.5rem;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 1rem;
+    }
+    button:hover {
+      opacity: 0.9;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <h1>Smart Healthcare System</h1>
+  </nav>
+  <div class="container">
+    <!-- Registration Card for Patients -->
+    <div class="card" id="registration">
+      <h2>Patient Registration</h2>
+      <form action="RegisterPatient.jsp" method="post">
+        <div class="form-group">
+          <label for="userName">Name:</label>
+          <input type="text" id="userName" name="userName" required>
+        </div>
+        <div class="form-group">
+          <label for="userEmail">Email:</label>
+          <input type="email" id="userEmail" name="userEmail" required>
+        </div>
+        <!-- Password Field -->
+        <div class="form-group">
+          <label for="password">Password:</label>
+          <input type="password" id="password" name="password" required>
+        </div>
+        <button type="submit">Register</button>
+      </form>
+    </div>
+    
+    <!-- Login Card -->
+    <div class="card" id="login">
+      <h2>Login</h2>
+      <form action="GatewayServlet" method="post">
+        <div class="form-group">
+          <label for="username">Username (Name):</label>
+          <input type="text" id="username" name="username" required>
+        </div>
+        <div class="form-group">
+          <label for="loginPassword">Password:</label>
+          <input type="password" id="loginPassword" name="password" required>
+        </div>
+        <button type="submit">Login</button>
+      </form>
+    </div>
+  </div>
+</body>
+</html>
