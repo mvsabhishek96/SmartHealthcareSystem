@@ -7,7 +7,7 @@
         return;
     }
     try {
-        Class.forName("com.mysql.jdbc.Driver");
+    	Class.forName("com.mysql.cj.jdbc.Driver");
         Connection con = DriverManager.getConnection("jdbc:mysql://localhost:3306/iot_db", "root", "");
         PreparedStatement ps = con.prepareStatement("SELECT * FROM doctor WHERE userEmail = ? AND password = ?");
         ps.setString(1, userEmail);
